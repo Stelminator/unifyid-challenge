@@ -1,5 +1,6 @@
 
 import requests
+from path import path
 
 RANDOM_ORG_QUOTA_API = 'https://www.random.org/quota/'
 RANDOM_ORG_INTEGER_API = 'https://www.random.org/integers/'
@@ -29,15 +30,33 @@ class RandomOrg(object):
         if 200 != ints.status_code:
             raise Failure(ints)
         try:
-            vals = [int(y, 16) for y in [x.strip() for x in ints.content.strip().split()] if len(y)]
-        except Exception as e:
+            vals = [int(y, base) for y in [x.strip() for x in ints.content.strip().split()] if len(y)]
+        except Exception as _e:
             return ints
         return vals
 
     def get_and_save_bytes(self, num_bytes, directory='.'):
-        pass
+        #TODO: validate all filenames are ints
+        files = sorted(int(pth.basename().split('.')[0]) for pth in path(directory).files('*.rawbytes'))
+        if files:
+            nextbase = str(files[-1] + 1)
+        else:
+            nextbase = str(1)
+        nextname = nextbase + '.rawbytes'
+        ints = self.get_integers(num_bytes, 0, 0xFF, base = 16)
+        value = ''.join(chr(i) for i in ints)
+        with open(nextname, 'wb') as f:
+            f.write(value)
+        return value
 
+    def get_bytes_from_local(self, directory='.'):
+        retval = []
+        files = sorted(int(pth.basename().split('.')[0]) for pth in path(directory).files('*.rawbytes'))
+        for i in files:
+            retval.append((path(directory) / str(i) + '.rawbytes').open('rb').read())
+        return ''.join(retval)
 
     def quota_remaining(self):
         resp = self.session.get(RANDOM_ORG_QUOTA_API, params=dict(format='plain'))
         return int(resp.content.strip())
+
