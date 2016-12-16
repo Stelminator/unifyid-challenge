@@ -13,10 +13,8 @@ class RandomOrg(object):
         self.session = requests.Session()
         self.session.headers.update({'user-agent': 'stelminator@gmail.com'})
 
-    def get_bits(self, num_bits):
-        return ''
-
     def get_integers(self, num = 1, min_int = 1, max_int = 2, col = 1, base = 16, format_return='plain', rnd='1'):
+        #TODO: deal with exponential backoff when trying to get data
         ints = self.session.get(RANDOM_ORG_INTEGER_API, params = {
             'num' : str(num),
             'min' : str(min_int),
